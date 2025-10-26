@@ -87,23 +87,32 @@ bot = SummaryBot()
 @app_commands.describe(
     mode="Summarization mode: 'catchup' (since last seen), time-based (e.g., '2h'), or context-based",
     context="Optional: Topic to focus on (for context-based summaries)",
-    detail="Summary detail level: brief, general, or detailed"
+    detail="Summary detail level: brief, general, or detailed",
+    language="Summary language (default: English)"
 )
-@app_commands.choices(detail=[
-    app_commands.Choice(name="Brief", value="brief"),
-    app_commands.Choice(name="General", value="general"),
-    app_commands.Choice(name="Detailed", value="detailed")
-])
+@app_commands.choices(
+    detail=[
+        app_commands.Choice(name="Brief", value="brief"),
+        app_commands.Choice(name="General", value="general"),
+        app_commands.Choice(name="Detailed", value="detailed")
+    ],
+    language=[
+        app_commands.Choice(name="English", value="english"),
+        app_commands.Choice(name="Indonesian", value="indonesian")
+    ]
+)
 async def summarize(
     interaction: discord.Interaction,
     mode: str = "catchup",
     context: str = None,
-    detail: app_commands.Choice[str] = None
+    detail: app_commands.Choice[str] = None,
+    language: app_commands.Choice[str] = None
 ):
     """Main summarize command"""
     await interaction.response.defer(thinking=True)
 
     summary_type = detail.value if detail else "general"
+    lang = language.value if language else "english"
     channel_id = interaction.channel.id
     user_id = interaction.user.id
     guild_id = interaction.guild.id
@@ -112,7 +121,7 @@ async def summarize(
         # Determine summarization type based on mode
         if mode == "catchup" or mode == "catch-up":
             summary = await bot.summarizer.summarize_since_last_seen(
-                user_id, guild_id, channel_id, summary_type, MAX_MESSAGES
+                user_id, guild_id, channel_id, summary_type, MAX_MESSAGES, lang
             )
 
         elif context:
@@ -124,13 +133,13 @@ async def summarize(
                 hours_back = int(time_delta.total_seconds() / 3600)
 
             summary = await bot.summarizer.summarize_with_context(
-                channel_id, context, hours_back, MAX_MESSAGES
+                channel_id, context, hours_back, MAX_MESSAGES, lang
             )
 
         else:
             # Time-based summary (e.g., "2h", "1d")
             summary = await bot.summarizer.summarize_time_range(
-                channel_id, mode, summary_type, MAX_MESSAGES
+                channel_id, mode, summary_type, MAX_MESSAGES, lang
             )
 
         # Split long summaries if needed (Discord has 2000 char limit)
@@ -148,15 +157,25 @@ async def summarize(
 
 
 @bot.tree.command(name="catchup", description="Quick bullet-point catchup of missed messages")
-async def catchup(interaction: discord.Interaction):
+@app_commands.describe(
+    language="Summary language (default: English)"
+)
+@app_commands.choices(language=[
+    app_commands.Choice(name="English", value="english"),
+    app_commands.Choice(name="Indonesian", value="indonesian")
+])
+async def catchup(interaction: discord.Interaction, language: app_commands.Choice[str] = None):
     """Quick catchup command"""
     await interaction.response.defer(thinking=True)
+
+    lang = language.value if language else "english"
 
     try:
         summary = await bot.summarizer.quick_catchup(
             interaction.user.id,
             interaction.guild.id,
-            interaction.channel.id
+            interaction.channel.id,
+            language=lang
         )
 
         await interaction.followup.send(summary)
@@ -175,6 +194,7 @@ async def summary_help(interaction: discord.Interaction):
 **Commands:**
 
 `/catchup` - Quick bullet-point summary of messages since you were last active
+  • `language`: Choose English or Indonesian (default: English)
 
 `/summarize` - Summarize messages with options:
   • `mode`: How to summarize
@@ -189,11 +209,16 @@ async def summary_help(interaction: discord.Interaction):
     - `general` - Balanced summary (default)
     - `detailed` - Comprehensive summary with topics
 
+  • `language`: Choose English or Indonesian (default: English)
+
 **Examples:**
-`/catchup` - Quick catchup since last seen
+`/catchup` - Quick catchup since last seen (English)
+`/catchup language:Indonesian` - Quick catchup in Indonesian
 `/summarize mode:2h` - Summarize last 2 hours
 `/summarize mode:1d detail:detailed` - Detailed summary of last 24h
+`/summarize mode:2h language:Indonesian` - Summarize in Indonesian
 `/summarize mode:12h context:meeting` - Summarize meeting-related messages from last 12h
+`/summarize mode:1d context:project language:Indonesian` - Context summary in Indonesian
 
 **Note:** The bot tracks messages automatically. Your "last seen" time updates when you send messages.
 """

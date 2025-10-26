@@ -11,6 +11,7 @@ A Discord bot that uses OpenAI's GPT models to summarize chat conversations, hel
   - Time-based: Summarize last X hours/days (e.g., "2h", "1d")
   - Context-based: Focus on specific topics or keywords
 - **Flexible Detail Levels**: Brief, General, or Detailed summaries
+- **Multi-Language Support**: Summaries available in English and Indonesian (Bahasa Indonesia)
 - **User Activity Tracking**: Automatically tracks when users are active
 - **Message Retention**: Configurable cleanup of old messages to save space
 
@@ -117,9 +118,13 @@ Bot is in X guilds
 #### `/catchup`
 Quick bullet-point summary of messages since you were last active.
 
-**Example:**
+**Parameters:**
+- `language` (optional): Summary language - English (default) or Indonesian
+
+**Examples:**
 ```
 /catchup
+/catchup language:Indonesian
 ```
 
 #### `/summarize`
@@ -138,6 +143,8 @@ Comprehensive summarization with multiple options.
   - `general` - Balanced summary (default)
   - `detailed` - Comprehensive with topics and participants
 
+- `language` (optional): Summary language - English (default) or Indonesian
+
 **Examples:**
 
 ```bash
@@ -153,8 +160,17 @@ Comprehensive summarization with multiple options.
 # Brief summary of last 3 hours
 /summarize mode:3h detail:brief
 
+# Summarize in Indonesian
+/summarize mode:2h language:Indonesian
+
+# Detailed Indonesian summary
+/summarize mode:1d detail:detailed language:Indonesian
+
 # Context-based: Find discussions about "meeting" in last 12 hours
 /summarize mode:12h context:meeting
+
+# Context-based in Indonesian
+/summarize mode:12h context:meeting language:Indonesian
 
 # Context-based: Find discussions about "project deadline" in last day
 /summarize mode:1d context:project deadline detail:detailed

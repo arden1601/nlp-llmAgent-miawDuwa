@@ -37,13 +37,16 @@ class Summarizer:
         guild_id: int,
         channel_id: int,
         summary_type: str = "general",
-        max_messages: int = 200
+        max_messages: int = 200,
+        language: str = "english"
     ) -> str:
         """Summarize messages since user was last active"""
 
         last_seen = await self.message_tracker.get_user_last_seen(user_id, guild_id, channel_id)
 
         if not last_seen:
+            if language.lower() in ["indonesian", "indonesia"]:
+                return "Saya tidak memiliki catatan kapan Anda terakhir aktif di channel ini. Coba gunakan ringkasan berbasis waktu (misalnya, `/summarize 2h`)."
             return "I don't have a record of when you were last active in this channel. Try using a time-based summary instead (e.g., `/summarize 2h`)."
 
         messages = await self.message_tracker.get_messages_since(
@@ -53,25 +56,31 @@ class Summarizer:
         )
 
         if not messages:
-            return f"No new messages since you were last active ({self._format_time_ago(last_seen)})."
+            time_ago = self._format_time_ago(last_seen, language)
+            if language.lower() in ["indonesian", "indonesia"]:
+                return f"Tidak ada pesan baru sejak Anda terakhir aktif ({time_ago})."
+            return f"No new messages since you were last active ({time_ago})."
 
         # Update last seen to now
         await self.message_tracker.update_user_activity(user_id, guild_id, channel_id)
 
-        return await self.llm_handler.generate_summary(messages, summary_type=summary_type)
+        return await self.llm_handler.generate_summary(messages, summary_type=summary_type, language=language)
 
     async def summarize_time_range(
         self,
         channel_id: int,
         time_str: str,
         summary_type: str = "general",
-        max_messages: int = 200
+        max_messages: int = 200,
+        language: str = "english"
     ) -> str:
         """Summarize messages from the last X hours/days"""
 
         time_delta = self.parse_time_string(time_str)
 
         if not time_delta:
+            if language.lower() in ["indonesian", "indonesia"]:
+                return "Format waktu tidak valid. Gunakan format seperti: `2h` (2 jam), `30m` (30 menit), atau `1d` (1 hari)"
             return "Invalid time format. Use format like: `2h` (2 hours), `30m` (30 minutes), or `1d` (1 day)"
 
         end_time = datetime.utcnow()
@@ -85,16 +94,19 @@ class Summarizer:
         )
 
         if not messages:
+            if language.lower() in ["indonesian", "indonesia"]:
+                return f"Tidak ada pesan yang ditemukan dalam {time_str} terakhir."
             return f"No messages found in the last {time_str}."
 
-        return await self.llm_handler.generate_summary(messages, summary_type=summary_type)
+        return await self.llm_handler.generate_summary(messages, summary_type=summary_type, language=language)
 
     async def summarize_with_context(
         self,
         channel_id: int,
         context: str,
         hours_back: int = 24,
-        max_messages: int = 200
+        max_messages: int = 200,
+        language: str = "english"
     ) -> str:
         """Summarize messages with a specific topic/context filter"""
 
@@ -109,6 +121,8 @@ class Summarizer:
         )
 
         if not messages:
+            if language.lower() in ["indonesian", "indonesia"]:
+                return f"Tidak ada pesan yang ditemukan dalam {hours_back} jam terakhir."
             return f"No messages found in the last {hours_back} hours."
 
         # Filter messages that might be relevant to context
@@ -125,7 +139,8 @@ class Summarizer:
         return await self.llm_handler.generate_summary(
             messages_to_summarize,
             context=context,
-            summary_type="context"
+            summary_type="context",
+            language=language
         )
 
     async def quick_catchup(
@@ -133,7 +148,8 @@ class Summarizer:
         user_id: int,
         guild_id: int,
         channel_id: int,
-        max_messages: int = 50
+        max_messages: int = 50,
+        language: str = "english"
     ) -> str:
         """Quick bullet-point catchup since last seen"""
 
@@ -150,24 +166,38 @@ class Summarizer:
         )
 
         if not messages:
+            if language.lower() in ["indonesian", "indonesia"]:
+                return "Tidak ada pesan baru untuk diikuti!"
             return "No new messages to catch up on!"
 
         # Update last seen
         await self.message_tracker.update_user_activity(user_id, guild_id, channel_id)
 
-        return await self.llm_handler.generate_quick_catchup(messages)
+        return await self.llm_handler.generate_quick_catchup(messages, language=language)
 
-    def _format_time_ago(self, dt: datetime) -> str:
+    def _format_time_ago(self, dt: datetime, language: str = "english") -> str:
         """Format a datetime as 'X time ago'"""
         delta = datetime.utcnow() - dt
 
-        if delta.days > 0:
-            return f"{delta.days} day{'s' if delta.days != 1 else ''} ago"
-        elif delta.seconds >= 3600:
-            hours = delta.seconds // 3600
-            return f"{hours} hour{'s' if hours != 1 else ''} ago"
-        elif delta.seconds >= 60:
-            minutes = delta.seconds // 60
-            return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+        if language.lower() in ["indonesian", "indonesia"]:
+            if delta.days > 0:
+                return f"{delta.days} hari yang lalu"
+            elif delta.seconds >= 3600:
+                hours = delta.seconds // 3600
+                return f"{hours} jam yang lalu"
+            elif delta.seconds >= 60:
+                minutes = delta.seconds // 60
+                return f"{minutes} menit yang lalu"
+            else:
+                return "baru saja"
         else:
-            return "just now"
+            if delta.days > 0:
+                return f"{delta.days} day{'s' if delta.days != 1 else ''} ago"
+            elif delta.seconds >= 3600:
+                hours = delta.seconds // 3600
+                return f"{hours} hour{'s' if hours != 1 else ''} ago"
+            elif delta.seconds >= 60:
+                minutes = delta.seconds // 60
+                return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+            else:
+                return "just now"

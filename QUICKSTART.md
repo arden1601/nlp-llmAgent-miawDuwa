@@ -97,10 +97,13 @@ In your Discord server:
 ## Common Commands
 
 ```bash
-/catchup                           # Quick summary since last seen
-/summarize mode:2h                 # Summarize last 2 hours
-/summarize mode:1d detail:detailed # Detailed summary of last day
-/summary_help                      # Show all commands
+/catchup                                      # Quick summary since last seen
+/catchup language:Indonesian                  # Quick summary in Indonesian
+/summarize mode:2h                            # Summarize last 2 hours
+/summarize mode:2h language:Indonesian        # Summarize in Indonesian
+/summarize mode:1d detail:detailed            # Detailed summary of last day
+/summarize mode:12h context:meeting           # Context-based summary
+/summary_help                                 # Show all commands
 ```
 
 ## Troubleshooting
