@@ -21,6 +21,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
 import sys
 import os
+import shutil
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -92,7 +93,7 @@ class TestMessageStorageRetrieval:
     async def test_store_and_retrieve_message(self):
         """Test storing and retrieving a single message"""
         # Create tracker
-        tracker = MessageTracker(db_path="test_database.db")
+        tracker = MessageTracker(db_path="test_dbs/test_database.db")
         await tracker.initialize()
         
         try:
@@ -122,15 +123,14 @@ class TestMessageStorageRetrieval:
             assert messages[0]['message_id'] == 123456789
         finally:
             # Cleanup
-            import os
-            if os.path.exists("test_database.db"):
-                os.remove("test_database.db")
+            if os.path.exists("test_dbs"):
+                shutil.rmtree("test_dbs")
     
     @pytest.mark.asyncio
     async def test_retrieve_messages_in_timerange(self):
         """Test retrieving messages within a specific time range"""
         # Create tracker
-        tracker = MessageTracker(db_path="test_database2.db")
+        tracker = MessageTracker(db_path="test_dbs/test_database2.db")
         await tracker.initialize()
         
         try:
@@ -160,15 +160,14 @@ class TestMessageStorageRetrieval:
             assert len(messages) >= 3
         finally:
             # Cleanup
-            import os
-            if os.path.exists("test_database2.db"):
-                os.remove("test_database2.db")
+            if os.path.exists("test_dbs"):
+                shutil.rmtree("test_dbs")
     
     @pytest.mark.asyncio
     async def test_message_limit(self):
         """Test that message limit is respected"""
         # Create tracker
-        tracker = MessageTracker(db_path="test_database3.db")
+        tracker = MessageTracker(db_path="test_dbs/test_database3.db")
         await tracker.initialize()
         
         try:
@@ -197,9 +196,8 @@ class TestMessageStorageRetrieval:
             assert len(messages) == 5
         finally:
             # Cleanup
-            import os
-            if os.path.exists("test_database3.db"):
-                os.remove("test_database3.db")
+            if os.path.exists("test_dbs"):
+                shutil.rmtree("test_dbs")
 
 
 # ============================================================================
@@ -213,7 +211,7 @@ class TestUserActivityTracking:
     async def test_update_user_activity(self):
         """Test updating user's last seen timestamp"""
         # Create tracker
-        tracker = MessageTracker(db_path="test_activity.db")
+        tracker = MessageTracker(db_path="test_dbs/test_activity.db")
         await tracker.initialize()
         
         try:
@@ -233,15 +231,14 @@ class TestUserActivityTracking:
             assert (datetime.utcnow() - last_seen).total_seconds() < 5  # Within 5 seconds
         finally:
             # Cleanup
-            import os
-            if os.path.exists("test_activity.db"):
-                os.remove("test_activity.db")
+            if os.path.exists("test_dbs"):
+                shutil.rmtree("test_dbs")
     
     @pytest.mark.asyncio
     async def test_no_activity_record(self):
         """Test behavior when user has no activity record"""
         # Create tracker
-        tracker = MessageTracker(db_path="test_activity2.db")
+        tracker = MessageTracker(db_path="test_dbs/test_activity2.db")
         await tracker.initialize()
         
         try:
@@ -256,15 +253,14 @@ class TestUserActivityTracking:
             assert last_seen is None
         finally:
             # Cleanup
-            import os
-            if os.path.exists("test_activity2.db"):
-                os.remove("test_activity2.db")
+            if os.path.exists("test_dbs"):
+                shutil.rmtree("test_dbs")
     
     @pytest.mark.asyncio
     async def test_multiple_channel_tracking(self):
         """Test tracking user activity across multiple channels"""
         # Create tracker
-        tracker = MessageTracker(db_path="test_activity3.db")
+        tracker = MessageTracker(db_path="test_dbs/test_activity3.db")
         await tracker.initialize()
         
         try:
@@ -286,9 +282,8 @@ class TestUserActivityTracking:
             assert last_seen_2 >= last_seen_1
         finally:
             # Cleanup
-            import os
-            if os.path.exists("test_activity3.db"):
-                os.remove("test_activity3.db")
+            if os.path.exists("test_dbs"):
+                shutil.rmtree("test_dbs")
 
 
 # ============================================================================
