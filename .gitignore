@@ -25,3 +25,8 @@ database/*.db
 # OS
 .DS_Store
 Thumbs.db
+
+ARCHITECTURE.md
+NLP_PRINCIPLES.md
+TECHNICAL_OVERVIEW.md
+WORKFLOW.md
